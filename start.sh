@@ -24,14 +24,14 @@ set_permission() {
   chmod +x ${SCRIPT_DIR}/${CARDANO_SCRIPT_DIR}/start.sh || return 1
   chmod +x ${SCRIPT_DIR}/${COSMOS_SCRIPT_DIR}/start.sh || return 1
   chmod +x ${SCRIPT_DIR}/${RELAYER_SCRIPT_DIR}/start.sh || return 1
-  chmod +x ${SCRIPT_DIR}/${OSMOSIS_SCRIPT_DIR}/start.sh || return 1
+  # chmod +x ${SCRIPT_DIR}/${OSMOSIS_SCRIPT_DIR}/start.sh || return 1
   return 0
 }
 
 run() {
     bash ${SCRIPT_DIR}/${CARDANO_SCRIPT_DIR}/start.sh && \
     bash ${SCRIPT_DIR}/${COSMOS_SCRIPT_DIR}/start.sh &&
-    bash ${SCRIPT_DIR}/${OSMOSIS_SCRIPT_DIR}/start.sh &&
+    # bash ${SCRIPT_DIR}/${OSMOSIS_SCRIPT_DIR}/start.sh &&
     bash ${SCRIPT_DIR}/${RELAYER_SCRIPT_DIR}/start.sh || return 1
   return 0
 }
