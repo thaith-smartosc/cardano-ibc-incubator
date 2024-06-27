@@ -926,6 +926,19 @@ func (cc *CardanoProvider) RelayPacketFromSequence(
 		return nil, nil, err
 	}
 
+	var dsthLastestHeight int64
+	dsthLastestHeight = int64(dsth)
+	retry.Do(func() error {
+		dsthLastestHeight, err = cc.QueryLatestHeight(ctx)
+		if err != nil {
+			return err
+		}
+		if dsthLastestHeight <= int64(dsth) {
+			return fmt.Errorf("not yet update transaction snapshot certificate")
+		}
+		return err
+	}, retry.Context(ctx), rtyAtt, rtyDelMax, rtyErr)
+
 	ibcHeader, err := cc.QueryIBCMithrilHeader(ctx, int64(dsth), &clientState)
 	if err != nil {
 		return nil, nil, err
