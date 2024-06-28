@@ -1,7 +1,6 @@
 use aiken/builtin
 use aiken/bytearray
 use aiken/list
-use aiken/string
 
 pub const slash_char = 47
 
@@ -110,8 +109,27 @@ pub fn hex_string_to_bytes(str: ByteArray) -> Option<ByteArray> {
   }
 }
 
+/// Converts an UNSIGNED integer to a `ByteArray` representing the UTF-8 characters of the integer.
 pub fn int_to_string(n: Int) -> ByteArray {
-  string.from_int(n) |> string.to_bytearray()
+  if n < 10 {
+    bytearray.push("", 48 + n)
+  } else {
+    int_to_string(n / 10) |> bytearray.concat(bytearray.push("", 48 + n % 10))
+  }
+}
+
+test test_int_to_string() {
+  let test_cases =
+    [
+      (0, "0"),
+      (7, "7"),
+      (99, "99"),
+      (123, "123"),
+      (1111, "1111"),
+      (54353434534, "54353434534"),
+    ]
+
+  list.all(test_cases, fn(tc) { int_to_string(tc.1st) == tc.2nd })
 }
 
 /// Custom function for checking whether a string in ids is a valid
