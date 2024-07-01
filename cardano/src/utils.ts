@@ -393,13 +393,13 @@ export const getNonceOutRef = async (
 ): Promise<[UTxO, OutputReference]> => {
   const signerUtxos = await lucid.wallet.getUtxos();
   if (signerUtxos.length < 1) throw new Error("No UTXO founded");
-  const NONCE_UTXO = signerUtxos[0];
+  const nonceUtxo = signerUtxos[0];
   const outputReference: OutputReference = {
     transaction_id: {
-      hash: NONCE_UTXO.txHash,
+      hash: nonceUtxo.txHash,
     },
-    output_index: BigInt(NONCE_UTXO.outputIndex),
+    output_index: BigInt(nonceUtxo.outputIndex),
   };
 
-  return [NONCE_UTXO, outputReference];
+  return [nonceUtxo, outputReference];
 };

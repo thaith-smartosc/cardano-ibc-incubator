@@ -9,7 +9,7 @@ type Validator =
   | "mintChannel"
   | "spendChannel"
   | "mintPort"
-  | "mintIdentifier"
+  | "mintAuthToken"
   | "spendTransferModule"
   | "spendMockModule"
   | "mintVoucher"

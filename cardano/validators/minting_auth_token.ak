@@ -6,9 +6,9 @@ use ibc/auth.{AuthToken}
 use ibc/utils/validator_utils
 
 validator {
-  /// mint_identifier mint a nonce token to use it as an identifier.
+  /// mint_auth_token mint a nonce token to use it as an identifier.
   /// token name based on an output reference so that it can only be minted once.
-  fn mint_identifier(redeemer: OutputReference, context: ScriptContext) -> Bool {
+  fn mint_auth_token(redeemer: OutputReference, context: ScriptContext) -> Bool {
     let (this_policy_id, inputs, _, mint) =
       validator_utils.extract_minting_context(context)
 
