@@ -1,7 +1,7 @@
 use aiken/dict
 use ibc/auth.{AuthToken}
 use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
+  ClientDatum,
 }
 use ibc/client/ics_007_tendermint_client/client_state.{ClientState}
 use ibc/client/ics_007_tendermint_client/cometbft/block/block_id.{
@@ -17,6 +17,7 @@ use ibc/client/ics_007_tendermint_client/header.{Header}
 use ibc/client/ics_007_tendermint_client/height.{Height}
 use ibc/client/ics_007_tendermint_client/types/unchecked_rational
 use ibc/core/ics_023_vector_commitments/merkle
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 
 const mock_chain_id = "sidechain-0"
 

@@ -11,9 +11,8 @@ use aiken/transaction/certificate.{CredentialRegistration}
 use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
 use ibc/auth.{AuthToken}
-use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
-}
+use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatum}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}
 use ibc/client/ics_007_tendermint_client/height

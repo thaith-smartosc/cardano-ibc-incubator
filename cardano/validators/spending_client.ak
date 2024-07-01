@@ -8,9 +8,8 @@ use aiken/transaction.{
 use aiken/transaction/credential
 use aiken/transaction/value
 use ibc/auth.{AuthToken}
-use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
-} as client_datum_mod
+use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatum} as client_datum_mod
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_redeemer.{
   Other, SpendClientRedeemer, UpdateClient,
 }

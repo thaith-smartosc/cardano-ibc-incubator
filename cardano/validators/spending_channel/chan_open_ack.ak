@@ -9,9 +9,8 @@ use aiken/transaction.{
 use aiken/transaction/credential.{Script}
 use aiken/transaction/value.{PolicyId}
 use ibc/auth.{AuthToken}
-use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
-}
+use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatum}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state.{ClientState} as client_state_mod
 use ibc/client/ics_007_tendermint_client/cometbft/protos/channel_pb
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}

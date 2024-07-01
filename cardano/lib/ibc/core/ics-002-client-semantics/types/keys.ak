@@ -3,7 +3,7 @@ use ibc/utils/string as string_utils
 
 pub const client_prefix = "ibc_client"
 
-const client_prefix_with_separator = "ibc_client-"
+pub const client_prefix_with_separator = "ibc_client-"
 
 const client_prefix_with_separator_len = 11
 

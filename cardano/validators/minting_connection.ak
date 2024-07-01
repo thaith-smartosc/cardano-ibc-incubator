@@ -12,9 +12,8 @@ use ibc/client/cardano_client/client_state as cardano_client
 use ibc/client/cardano_client/protos/cardano_pb.{
   AnyCardanoClientState, CardanoClientState,
 }
-use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
-}
+use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatum}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state.{ClientState}
 use ibc/client/ics_007_tendermint_client/cometbft/protos/connection_pb
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}

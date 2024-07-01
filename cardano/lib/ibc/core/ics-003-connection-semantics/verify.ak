@@ -1,5 +1,5 @@
 use aiken/dict
-use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatumState}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state
 use ibc/client/ics_007_tendermint_client/cometbft/protos/channel_pb
 use ibc/client/ics_007_tendermint_client/cometbft/protos/connection_pb
@@ -16,8 +16,8 @@ use ibc/core/ics_024_host_requirements/channel_keys
 use ibc/core/ics_024_host_requirements/client_keys
 use ibc/core/ics_024_host_requirements/connection_keys
 use ibc/core/ics_024_host_requirements/packet_keys
-use ibc/utils/math
 use ibc/utils/bits
+use ibc/utils/math
 
 pub fn verify_connection_state(
   client_datum_state: ClientDatumState,

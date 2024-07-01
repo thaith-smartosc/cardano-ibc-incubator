@@ -9,6 +9,10 @@ pub type AuthToken {
   name: AssetName,
 }
 
+pub fn new(policy_id: PolicyId, name: AssetName) -> AuthToken {
+  AuthToken { policy_id, name }
+}
+
 pub fn contain_auth_token(output: Output, token: AuthToken) -> Bool {
   value.quantity_of(output.value, token.policy_id, token.name) == 1
 }

@@ -5,15 +5,11 @@ use ibc/client/ics_007_tendermint_client/client_state.{ClientState} as client_st
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}
 use ibc/client/ics_007_tendermint_client/header.{Header} as header_mod
 use ibc/client/ics_007_tendermint_client/height.{Height}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 
 pub type ClientDatum {
   state: ClientDatumState,
   token: AuthToken,
-}
-
-pub type ClientDatumState {
-  client_state: ClientState,
-  consensus_states: List<(Height, ConsensusState)>,
 }
 
 pub fn is_initialized_valid(datum: ClientDatum, auth_token: AuthToken) -> Bool {

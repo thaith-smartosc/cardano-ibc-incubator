@@ -1,7 +1,7 @@
 use aiken/dict
 use aiken/list
 use aiken/transaction.{Mint, ScriptContext}
-use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatumState}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state.{ClientState} as client_state_mod
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}
 use ibc/client/ics_007_tendermint_client/height.{Height} as height_mod

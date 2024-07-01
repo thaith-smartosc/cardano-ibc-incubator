@@ -1,51 +1,48 @@
+use aiken/bytearray
 use aiken/dict.{Dict}
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/interval
 use aiken/list
 use aiken/transaction.{
-  InlineDatum, Input, Mint, Output, OutputReference, Redeemer, ScriptContext,
-  ScriptPurpose, Spend, Transaction, TransactionId,
+  Input, Mint, Redeemer, ScriptContext, ScriptPurpose, Spend, Transaction,
 }
 use aiken/transaction/credential.{Script}
-use aiken/transaction/value
+use aiken/transaction/value.{PolicyId}
 use ibc/auth.{AuthToken}
-use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
-}
-use ibc/client/ics_007_tendermint_client/client_redeemer.{MintClientRedeemer}
+use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatum}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}
-use ibc/client/ics_007_tendermint_client/height.{Height}
+use ibc/client/ics_007_tendermint_client/height
 use ibc/client/ics_007_tendermint_client/types/unchecked_rational
 use ibc/core/ics_002_client_semantics/types/client.{Active}
-use ibc/core/ics_002_client_semantics/types/keys.{client_prefix}
+use ibc/core/ics_002_client_semantics/types/keys.{client_prefix_with_separator}
 use ibc/core/ics_023_vector_commitments/merkle.{MerkleRoot}
-use ibc/core/ics_025_handler_interface/handler.{HandlerState}
-use ibc/core/ics_025_handler_interface/handler_datum.{
-  HandlerDatum, handler_token_name,
-}
+use ibc/core/ics_025_handler_interface/handler as handler_state_mod
+use ibc/core/ics_025_handler_interface/handler_datum.{HandlerDatum}
 use ibc/core/ics_025_handler_interface/handler_redeemer.{
   CreateClient as HandlerCreateClient, HandlerOperator,
 }
 use ibc/utils/string as string_utils
+use ibc/utils/test_utils
 use ibc/utils/validator_utils
 
-validator(spend_client_script_hash: Hash<Blake2b_224, Script>) {
-  fn mint_client(redeemer: MintClientRedeemer, context: ScriptContext) -> Bool {
+validator(
+  handler_token: AuthToken,
+  client_spending_script_hash: Hash<Blake2b_224, Script>,
+) {
+  fn mint_client(_redeemer: Void, context: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = context
-    expect Mint(client_mint_policy_id) = purpose
+    expect Mint(client_minting_policy_id) = purpose
     let Transaction { inputs, outputs, mint, redeemers, validity_range, .. } =
       transaction
-    let handler_auth_token = redeemer.handler_auth_token
 
     //========================valid input=======================
     // input contains handler auth token
     expect Some(handler_input) =
       inputs
         |> list.find(
-            fn(input) {
-              input.output |> auth.contain_auth_token(handler_auth_token)
-            },
+            fn(input) { input.output |> auth.contain_auth_token(handler_token) },
           )
 
     // spent handler redeemer is CreateClient operator
@@ -55,26 +52,25 @@ validator(spend_client_script_hash: Hash<Blake2b_224, Script>) {
     expect handler_operator == HandlerCreateClient
 
     //========================valid mint=======================
-    // extract client id
     let spent_handler_output = handler_input.output
     expect spent_handler_datum: HandlerDatum =
       validator_utils.get_inline_datum(spent_handler_output)
 
-    // mint just 1 client_state token
     let client_token_name =
       string_utils.int_to_string(spent_handler_datum.state.next_client_sequence)
-        |> auth.generate_token_name(handler_auth_token, client_prefix, _)
+        |> bytearray.concat(client_prefix_with_separator, _)
+
     let client_token =
-      AuthToken { policy_id: client_mint_policy_id, name: client_token_name }
-    expect mint |> auth.mint_auth_token(client_token)
+      AuthToken { policy_id: client_minting_policy_id, name: client_token_name }
+    expect auth.mint_auth_token(mint, client_token)
 
     //========================valid output========================
     expect [client_output] =
       outputs
-        |> transaction.find_script_outputs(spend_client_script_hash)
+        |> transaction.find_script_outputs(client_spending_script_hash)
 
     // client utxo contains auth token
-    expect client_output |> auth.contain_auth_token(client_token)
+    expect auth.contain_auth_token(client_output, client_token)
 
     // client utxo datum created valid
     expect client_output_datum: ClientDatum =
@@ -101,117 +97,104 @@ validator(spend_client_script_hash: Hash<Blake2b_224, Script>) {
 }
 
 //==========================test==========================
+
+type FakeData {
+  handler_token: AuthToken,
+  client_spending_script_hash: Hash<Blake2b_224, Script>,
+  client_minting_policy_id: PolicyId,
+}
+
+fn setup_fake_data() -> FakeData {
+  let handler_token = auth.new("fake handler policy_id", "fake handler name")
+
+  let client_spending_script_hash = "fake spend client script hash"
+
+  let client_minting_policy_id = "fake client mint policy id"
+
+  FakeData {
+    handler_token,
+    client_spending_script_hash,
+    client_minting_policy_id,
+  }
+}
+
 test test_create_valid_client() {
-  let mock_client_mint_policy_id =
-    #"7b00fe1c61f6fe90bb35ad20ae965a5cbc48d3b88cefbffcafedb64a"
-  let mock_latest_height = Height { revision_number: 1, revision_height: 99 }
-  let mock_timestamp = 1705635096691000000
-  let mock_spend_client_script_hash =
-    #"b39a450d76612cb3a690b82cb04c6ab730b83da86937d277ff887722"
-  let mock_handler_script_hash =
-    #"907e92f65241ea67029c54c535d06805118864f31702a08f58f1699d"
-  let mock_handler_auth_token =
-    AuthToken {
-      policy_id: #"fa413b4f069d5459decaf19a04f64665ad9023b5d3070bf0589c54c8",
-      name: handler_token_name,
-    }
-  let mock_client_sequence = 0
-  let mock_spent_output_reference =
-    OutputReference {
-      transaction_id: TransactionId { hash: "tx_hash" },
-      output_index: 0,
-    }
+  let fake_data = setup_fake_data()
 
   //========================arrange input=======================
-  let handler_datum =
-    HandlerDatum {
-      state: HandlerState {
-        next_client_sequence: mock_client_sequence,
-        next_connection_sequence: 0,
-        next_channel_sequence: 0,
-        bound_port: [],
-      },
-      token: mock_handler_auth_token,
-    }
+  let fake_handler_input =
+    test_utils.setup_handler(
+      fake_data.handler_token,
+      handler_state_mod.new(1, 0, 0, []),
+    )
 
-  let handler_input =
-    Input {
-      output_reference: mock_spent_output_reference,
-      output: Output {
-        address: credential.from_script(mock_handler_script_hash),
-        value: value.from_asset(
-          mock_handler_auth_token.policy_id,
-          mock_handler_auth_token.name,
-          1,
-        ),
-        datum: InlineDatum(handler_datum),
-        reference_script: None,
-      },
-    }
+  let inputs =
+    [fake_handler_input]
+
+  //========================arrange redeemer=======================
   let redeemer: Data = HandlerCreateClient
   let redeemers: Dict<ScriptPurpose, Redeemer> =
-    [(Spend(mock_spent_output_reference), redeemer)]
-      |> dict.from_list(fn(_key1, _key2) { Greater })
+    test_utils.create_redeemers(
+      [(Spend(fake_handler_input.output_reference), redeemer)],
+    )
 
   //========================arrange mint=======================
-  let client_token_name =
-    string_utils.int_to_string(mock_client_sequence)
-      |> auth.generate_token_name(mock_handler_auth_token, client_prefix, _)
+  let client_token_name = "ibc_client-1"
 
   let mint =
-    value.from_asset(mock_client_mint_policy_id, client_token_name, 1)
-      |> value.to_minted_value()
+    test_utils.setup_mint_auth_token(
+      fake_data.client_minting_policy_id,
+      client_token_name,
+    )
 
   //========================arrange output=======================
-  let new_client_state =
+  let fake_latest_height = height.new_height(0, 100)
+
+  let fake_client_state =
     client_state.new_client_state(
       chain_id: "cosmoshub",
       trust_level: unchecked_rational.from_int(1),
       trusting_period: 1_000_000_000_000,
       unbonding_period: 1_000_000_000_001,
       max_clock_drift: 1,
-      latest_height: mock_latest_height,
+      latest_height: fake_latest_height,
       proof_specs: [],
     )
 
-  let new_consensus_state =
+  let fake_consensus_state =
     ConsensusState {
-      timestamp: mock_timestamp,
+      timestamp: 1705635096691000000,
       next_validators_hash: #"",
       root: MerkleRoot { hash: #"" },
     }
 
   let client_token =
-    AuthToken { policy_id: mock_client_mint_policy_id, name: client_token_name }
+    auth.new(fake_data.client_minting_policy_id, client_token_name)
+
+  let client_datum_state =
+    client_datum_state.new(
+      fake_client_state,
+      [(fake_latest_height, fake_consensus_state)],
+    )
 
   let client_datum =
-    ClientDatum {
-      state: ClientDatumState {
-        client_state: new_client_state,
-        consensus_states: dict.new()
-          |> dict.insert(mock_latest_height, new_consensus_state, height.compare)
-          |> dict.to_list(),
-      },
-      token: client_token,
-    }
+    ClientDatum { state: client_datum_state, token: client_token }
 
   let client_output =
-    Output {
-      address: credential.from_script(mock_spend_client_script_hash),
-      value: value.from_asset(mock_client_mint_policy_id, client_token_name, 1),
-      datum: InlineDatum(client_datum),
-      reference_script: None,
-    }
+    test_utils.create_output(
+      fake_data.client_spending_script_hash,
+      [(fake_data.client_minting_policy_id, client_token_name, 1)],
+      client_datum,
+    )
 
-  let valid_to =
-    ( new_consensus_state.timestamp + new_client_state.trusting_period ) / 1_000_000 - 1
+  let valid_to = 1
 
   let context =
     ScriptContext {
-      purpose: Mint(mock_client_mint_policy_id),
+      purpose: Mint(fake_data.client_minting_policy_id),
       transaction: Transaction {
         ..transaction.placeholder(),
-        inputs: [handler_input],
+        inputs: inputs,
         outputs: [client_output],
         mint: mint,
         redeemers: redeemers,
@@ -220,8 +203,9 @@ test test_create_valid_client() {
     }
 
   mint_client(
-    mock_spend_client_script_hash,
-    MintClientRedeemer { handler_auth_token: mock_handler_auth_token },
+    fake_data.handler_token,
+    fake_data.client_spending_script_hash,
+    Void,
     context,
   )
 }

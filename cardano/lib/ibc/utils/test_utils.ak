@@ -1,19 +1,22 @@
-use aiken/dict
+use aiken/dict.{Dict}
 use aiken/int
+use aiken/list
 use aiken/transaction.{
-  InlineDatum, Input, Output, OutputReference, TransactionId,
+  InlineDatum, Input, Output, OutputReference, Redeemer, ScriptPurpose,
+  TransactionId,
 }
 use aiken/transaction/credential
-use aiken/transaction/value
+use aiken/transaction/value.{AssetName, MintedValue, PolicyId}
 use ibc/auth.{AuthToken}
-use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
-}
+use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatum}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state.{ClientState}
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}
 use ibc/client/ics_007_tendermint_client/height.{Height} as height_mod
 use ibc/core/ics_004/channel_datum.{ChannelDatum, ChannelDatumState}
 use ibc/core/ics_004/types/packet.{Packet} as packet_mod
+use ibc/core/ics_025_handler_interface/handler.{HandlerState}
+use ibc/core/ics_025_handler_interface/handler_datum.{HandlerDatum}
 use ibc/utils/validator_utils
 
 pub fn build_channel_output(
@@ -110,5 +113,65 @@ pub fn send_packet(packet: Packet, channel_datum: ChannelDatum) -> ChannelDatum 
         |> dict.insert(packet.sequence, commitment, int.compare)
         |> dict.to_list(),
     },
+  }
+}
+
+pub fn setup_mint_auth_token(
+  policy_id: PolicyId,
+  name: ByteArray,
+) -> MintedValue {
+  value.from_asset(policy_id, name, 1)
+    |> value.to_minted_value()
+}
+
+pub fn compare_script_purpose(
+  _key1: ScriptPurpose,
+  _key2: ScriptPurpose,
+) -> Ordering {
+  Greater
+}
+
+pub fn create_redeemers(
+  redeemers_list: List<(ScriptPurpose, Data)>,
+) -> Dict<ScriptPurpose, Redeemer> {
+  dict.from_list(redeemers_list, compare_script_purpose)
+}
+
+pub fn setup_handler(handler_token: AuthToken, state: HandlerState) -> Input {
+  let handler_datum = HandlerDatum { state, token: handler_token }
+
+  let handler_input =
+    Input {
+      output_reference: OutputReference {
+        transaction_id: TransactionId { hash: "fake handler tx id" },
+        output_index: 0,
+      },
+      output: create_output(
+        "fake spend handler script hash",
+        [(handler_token.policy_id, handler_token.name, 1)],
+        handler_datum,
+      ),
+    }
+
+  handler_input
+}
+
+pub fn create_output(
+  script_hash: ByteArray,
+  assets: List<(PolicyId, AssetName, Int)>,
+  datum: Data,
+) -> Output {
+  let assets =
+    list.foldl(
+      assets,
+      value.zero(),
+      fn(cur, acc) { value.add(acc, cur.1st, cur.2nd, cur.3rd) },
+    )
+
+  Output {
+    address: credential.from_script(script_hash),
+    value: assets,
+    datum: InlineDatum(datum),
+    reference_script: None,
   }
 }

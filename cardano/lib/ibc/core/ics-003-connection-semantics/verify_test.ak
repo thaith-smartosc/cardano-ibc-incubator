@@ -1,5 +1,5 @@
 use aiken/dict
-use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatumState}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state.{ClientState}
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}
 use ibc/client/ics_007_tendermint_client/height.{Height} as height_mod

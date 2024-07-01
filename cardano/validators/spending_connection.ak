@@ -9,9 +9,8 @@ use aiken/transaction.{
 use aiken/transaction/credential.{Script}
 use aiken/transaction/value.{PolicyId}
 use ibc/auth.{AuthToken}
-use ibc/client/ics_007_tendermint_client/client_datum.{
-  ClientDatum, ClientDatumState,
-}
+use ibc/client/ics_007_tendermint_client/client_datum.{ClientDatum}
+use ibc/client/ics_007_tendermint_client/client_datum_state.{ClientDatumState}
 use ibc/client/ics_007_tendermint_client/client_state.{ClientState}
 use ibc/client/ics_007_tendermint_client/cometbft/protos/connection_pb
 use ibc/client/ics_007_tendermint_client/consensus_state.{ConsensusState}
@@ -23,8 +22,8 @@ use ibc/client/ics_007_tendermint_client/types/verify_proof_redeemer.{
 }
 use ibc/client/mithril_client/client_state as mithril_client_state
 use ibc/client/mithril_client/protos/mithril_pb.{
-  AnyMithrilClientState, MithrilClientState, MithrilHeight,
-  MithrilProtocolParameters, Fraction
+  AnyMithrilClientState, Fraction, MithrilClientState, MithrilHeight,
+  MithrilProtocolParameters,
 }
 use ibc/core/ics_002_client_semantics/types/client.{Active}
 use ibc/core/ics_002_client_semantics/types/keys as client_keys_mod
@@ -611,7 +610,11 @@ test conn_open_ack_succeed() {
       current_epoch: 1,
       trusting_period: 1,
       protocol_parameters: Some(
-        MithrilProtocolParameters { k: 0, m: 0, phi_f: Some(Fraction {numerator: 0, denominator: 1}),},
+        MithrilProtocolParameters {
+          k: 0,
+          m: 0,
+          phi_f: Some(Fraction { numerator: 0, denominator: 1 }),
+        },
       ),
       upgrade_path: [],
     }
