@@ -75,10 +75,12 @@ export const submitTx = async (
   logSize = true,
   nativeUplc?: boolean,
 ) => {
+  await delay(125);
+
   if (txName !== undefined) {
     console.log("Submit tx:", txName);
   }
-  const completedTx = await tx.complete({ nativeUplc });
+  const completedTx = await tx.complete({ nativeUplc: true });
   if (logSize) {
     if (txName !== undefined) {
       console.log(txName, "size:", completedTx.txComplete.to_bytes().length);

@@ -12,6 +12,7 @@ import {
   UTxO,
 } from "npm:@dinhbx/lucid-custom";
 import {
+  delay,
   formatTimestamp,
   generateIdentifierTokenName,
   generateTokenName,
@@ -194,6 +195,7 @@ export const createDeployment = async (
     lucid,
     provider,
     referredValidators,
+    mode,
   );
 
   const [mockTokenPolicyId, mockTokenName] = await mintMockToken(lucid);
@@ -382,12 +384,17 @@ async function createReferenceUtxos(
   lucid: Lucid,
   provider: Provider,
   referredValidators: Script[],
+  mode?: string,
 ) {
+  const baseUrl = `keys/${mode}`;
+  await ensureDir(baseUrl);
   const deployLucids: Lucid[] = await Promise.all(
     referredValidators.map(async (_) => {
       const newLucid = await Lucid.new(provider, "Preview");
       const sk = newLucid.utils.generatePrivateKey();
       newLucid.selectWalletFromPrivateKey(sk);
+      const address = await newLucid.wallet.address();
+      await Deno.writeTextFile(`${baseUrl}/${address}`, sk);
       return newLucid;
     }),
   );
@@ -396,7 +403,7 @@ async function createReferenceUtxos(
   await Promise.all(
     deployLucids.map(async (inst) => {
       const address = await inst.wallet.address();
-      fundDeployAccTx.payToAddress(address, { lovelace: 1000000000n });
+      fundDeployAccTx.payToAddress(address, { lovelace: 60000000n });
     }),
   );
   await submitTx(fundDeployAccTx, lucid, "fundDeployAccTx", false);
@@ -508,7 +515,11 @@ const deployHandler = async (
       },
     );
 
-  const mintHandlerTxHash = await submitTx(mintHandlerTx);
+  const mintHandlerTxHash = await submitTx(
+    mintHandlerTx,
+    lucid,
+    "Mint Handler",
+  );
   console.log("Tx submitted with hash:", mintHandlerTxHash);
   console.log("Waiting tx complete");
   await lucid.awaitTx(mintHandlerTxHash);
